@@ -33,7 +33,7 @@ def create_json_file (year, type, round, matchup, game):
     else:
         game_id = compose_playoff_game_id(year, round, matchup, game)
 
-    file_path = "./" + str(year) + "-" + str(year+1) + "/" + str(type) + "/" + game_id + ".json" 
+    file_path = "./data/" + str(year) + "-" + str(year+1) + "/" + str(type) + "/" + game_id + ".json" 
     if not Path(file_path).exists():
         json_data = get_game_data(compose_api_url(game_id))
         try:
@@ -51,20 +51,20 @@ def __main__ ():
             print(type)
             if type == "R":
                 if year == 2016:
-                    Path("./2016-2017/R").mkdir(parents=True, exist_ok=True)
+                    Path("./data/2016-2017/R").mkdir(parents=True, exist_ok=True)
                     for game in range(1, 1231):
                         create_json_file(year, type, None, None, game)
                 elif 2017 <= year <= 2019:
-                    Path("./" + str(year) + "-" + str(year+1) + "/R").mkdir(parents=True, exist_ok=True)    
+                    Path("./data/" + str(year) + "-" + str(year+1) + "/R").mkdir(parents=True, exist_ok=True)    
                     for game in range(1, 1272):
                         create_json_file(year, type, None, None, game)
                 else: 
-                    Path("./" + str(year) + "-" + str(year+1) + "/R").mkdir(parents=True, exist_ok=True)    
+                    Path("./data/" + str(year) + "-" + str(year+1) + "/R").mkdir(parents=True, exist_ok=True)    
                     for game in range(1, 868):
                         create_json_file(year, type, None, None, game)
                                         
             else: 
-                Path("./" + str(year) + "-" + str(year+1) + "/P").mkdir(parents=True, exist_ok=True)
+                Path("./data/" + str(year) + "-" + str(year+1) + "/P").mkdir(parents=True, exist_ok=True)
                 for round in range(1, 5):
                     if round == 1:
                         for matchup in range(1,9):
