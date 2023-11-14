@@ -311,3 +311,7 @@ def main():
     df20202021P = pd.read_csv('2020-2021_P_clean.csv')
     df20202021 = pd.concat([df20202021R, df20202021P])
     df20202021.to_csv('data/FE2/20202021_clean.csv', encoding='utf-8', index=False)
+
+
+if __name__ == '__main__':
+    main()
