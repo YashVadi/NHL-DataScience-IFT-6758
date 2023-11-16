@@ -107,7 +107,7 @@ def calculate_speed_from_prev(df):
     df['speed'] = df['distFromPrev']/df['timeFromLastEvent']
     return df
 
-def create_csv(folder_path):
+def create_csv(folder_path, save_dir):
     data_to_tidy = get_all_files_path_under(folder_path)
     #columns = ['gamePk','season','gameType','home','away',
  #'eventTypeId','shotType','shooter','goalie','eventPeriod','eventPeriodType','x','y'
@@ -261,56 +261,63 @@ def create_csv(folder_path):
     path =os.path.normpath(folder_path)
     path.split('/')[-2:]
     csv_name = path.split('/')[-2]+'_'+ path.split('/')[-1]+'_clean'+'.csv'
-    df.to_csv(csv_name, encoding='utf-8', index=False)
+    df.to_csv(os.path.join(save_dir, csv_name), encoding='utf-8', index=False)
 
 
 def main():
-    data_folder = "data/raw"
+    data_folder = "data/raw/"
+    save_dir = 'data/FE2/'
 
     folder_path_20162017P = data_folder + '2016-2017/P'
     folder_path_20162017R = data_folder + '2016-2017/R'
-    create_csv(folder_path_20162017R)
-    create_csv(folder_path_20162017P)
-    df20162017R = pd.read_csv('2016-2017_R_clean.csv')
-    df20162017P = pd.read_csv('2016-2017_P_clean.csv')
+    create_csv(folder_path_20162017R, save_dir)
+    create_csv(folder_path_20162017P, save_dir)
+    df20162017R = pd.read_csv(save_dir+'2016-2017_R_clean.csv')
+    df20162017P = pd.read_csv(save_dir+'2016-2017_P_clean.csv')
     df20162017 = pd.concat([df20162017R,df20162017P])
-    df20162017.to_csv('data/FE2/20162017_clean.csv', encoding='utf-8', index=False)
+    df20162017.to_csv(save_dir+'20162017_clean.csv', encoding='utf-8', index=False)
 
     folder_path_20172018P = data_folder + '2017-2018/P'
     folder_path_20172018R = data_folder + '2017-2018/R'
-    create_csv(folder_path_20172018R)
-    create_csv(folder_path_20172018P)
-    df20172018R = pd.read_csv('2017-2018_R_clean.csv')
-    df20172018P = pd.read_csv('2017-2018_P_clean.csv')
+    create_csv(folder_path_20172018R, save_dir)
+    create_csv(folder_path_20172018P, save_dir)
+    df20172018R = pd.read_csv(save_dir+'2017-2018_R_clean.csv')
+    df20172018P = pd.read_csv(save_dir+'2017-2018_P_clean.csv')
     df20172018 = pd.concat([df20172018R,df20172018P])
-    df20172018.to_csv('data/FE2/20172018_clean.csv', encoding='utf-8', index=False)
+    df20172018.to_csv(save_dir+'20172018_clean.csv', encoding='utf-8', index=False)
 
     folder_path_20182019P = data_folder + '2018-2019/P'
     folder_path_20182019R = data_folder + '2018-2019/R'
-    create_csv(folder_path_20182019R)
-    create_csv(folder_path_20182019P)
-    df20182019R = pd.read_csv('2018-2019_R_clean.csv')
-    df20182019P = pd.read_csv('2018-2019_P_clean.csv')
+    create_csv(folder_path_20182019R, save_dir)
+    create_csv(folder_path_20182019P, save_dir)
+    df20182019R = pd.read_csv(save_dir+'2018-2019_R_clean.csv')
+    df20182019P = pd.read_csv(save_dir+'2018-2019_P_clean.csv')
     df20182019 = pd.concat([df20182019R,df20182019P])
-    df20182019.to_csv('data/FE2/20182019_clean.csv', encoding='utf-8', index=False)
+    df20182019.to_csv(save_dir+'20182019_clean.csv', encoding='utf-8', index=False)
 
     folder_path_20192020R = os.path.join(data_folder, '2019-2020/R')
     folder_path_20192020P = os.path.join(data_folder, '2019-2020/P')
-    create_csv(folder_path_20192020R)
-    create_csv(folder_path_20192020P)
-    df20192020R = pd.read_csv('2019-2020_R_clean.csv')
-    df20192020P = pd.read_csv('2019-2020_P_clean.csv')
+    create_csv(folder_path_20192020R, save_dir)
+    create_csv(folder_path_20192020P, save_dir)
+    df20192020R = pd.read_csv(save_dir+'2019-2020_R_clean.csv')
+    df20192020P = pd.read_csv(save_dir+'2019-2020_P_clean.csv')
     df20192020 = pd.concat([df20192020R, df20192020P])
-    df20192020.to_csv('data/FE2/20192020_clean.csv', encoding='utf-8', index=False)
+    df20192020.to_csv(save_dir+'20192020_clean.csv', encoding='utf-8', index=False)
 
     folder_path_20202021R = os.path.join(data_folder, '2020-2021/R')
     folder_path_20202021P = os.path.join(data_folder, '2020-2021/P')
-    create_csv(folder_path_20202021R)
-    create_csv(folder_path_20202021P)
-    df20202021R = pd.read_csv('2020-2021_R_clean.csv')
-    df20202021P = pd.read_csv('2020-2021_P_clean.csv')
+    create_csv(folder_path_20202021R, save_dir)
+    create_csv(folder_path_20202021P, save_dir)
+    df20202021R = pd.read_csv(save_dir+'2020-2021_R_clean.csv')
+    df20202021P = pd.read_csv(save_dir+'2020-2021_P_clean.csv')
     df20202021 = pd.concat([df20202021R, df20202021P])
-    df20202021.to_csv('data/FE2/20202021_clean.csv', encoding='utf-8', index=False)
+    df20202021.to_csv(save_dir+'20202021_clean.csv', encoding='utf-8', index=False)
+    
+    df20162018 = pd.concat([df20162017 ,df20172018]).sort_values(by='gamePk', ascending=True)
+    df20162019 = pd.concat([df20162018 ,df20182019]).sort_values(by='gamePk', ascending=True)
+    df20162019 = pd.concat([df20162019 ,df20192020]).sort_values(by='gamePk', ascending=True)
+    df20162019.to_csv(save_dir+'20162019_clean.csv', encoding='utf-8', index=False)
+
 
 
 if __name__ == '__main__':
