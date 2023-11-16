@@ -6,6 +6,14 @@ from datetime import datetime
 from tqdm import tqdm
 import math
 from dateutil import parser
+from dotenv import load_dotenv, find_dotenv
+import pickle
+load_dotenv(find_dotenv())
+
+
+from comet_ml import Experiment
+
+COMET_API_KEY = os.environ.get("COMET_API_KEY")
 
 
 def get_all_files_path_under(folder_path):
@@ -317,6 +325,22 @@ def main():
     df20162019 = pd.concat([df20162018 ,df20182019]).sort_values(by='gamePk', ascending=True)
     df20162019 = pd.concat([df20162019 ,df20192020]).sort_values(by='gamePk', ascending=True)
     df20162019.to_csv(save_dir+'20162019_clean.csv', encoding='utf-8', index=False)
+    
+    experiment = Experiment(
+      api_key=COMET_API_KEY,
+      project_name="baselines",
+      workspace="ift6758-milestone2-udem"
+    )
+    
+    subset_df = df20172018[df20172018.gamePk==2017021065]
+    print(subset_df)
+    
+    experiment.log_dataframe_profile(
+    subset_df, 
+    name='wpg_v_wsh_2017021065',  # keep this name
+    dataframe_format='csv'  # ensure you set this flag!
+    )
+
 
 
 
