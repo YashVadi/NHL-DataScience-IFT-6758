@@ -1,4 +1,4 @@
-# serving/app.py
+
 from flask import Flask, jsonify, request
 import json
 import logging
@@ -14,6 +14,7 @@ load_dotenv(find_dotenv())
 
 COMET_API_KEY = os.environ.get("COMET_API_KEY")
 LOG_FILE = os.environ.get("FLASK_LOG", "flask.log")
+print(LOG_FILE)
 
 app = Flask(__name__)
 
@@ -131,8 +132,6 @@ def predict():
     except Exception as e:
         logging.error(f'Error in /predict endpoint: {str(e)}')
         return jsonify({'error': 'Internal Server Error'}), 500
-
-    
 
 
 if __name__ == '__main__':
