@@ -8,57 +8,42 @@ from comet_ml import API
 from dotenv import load_dotenv, find_dotenv
 import os
 
-from pickle
+import pickle
 
 load_dotenv(find_dotenv())
 
 COMET_API_KEY = os.environ.get("COMET_API_KEY")
-
-
-
-app = Flask(__name__)
-
-current_model = None
-comet_ml_wrokspace = 'ift6758-milestone2-udem'
-comet_ml_project_name = 'baselines'
-
-comet_api = API(api_key=COMET_API_KEY, cache=True)
-
+LOG_FILE = os.environ.get("FLASK_LOG", "flask.log")
 
 app = Flask(__name__)
 
-current_model = None
-comet_ml_wrokspace = 'ift6758-milestone2-udem'
-comet_ml_project_name = 'baselines'
 
+current_model = None
 comet_api = API(api_key=COMET_API_KEY, cache=True)
 
-# #get the Model object
-# model = comet_api.get_model(workspace=comet_ml_wrokspace, model_name)
+@app.before_first_request
+def before_first_request():
+    """
+    Hook to handle any initialization before the first request (e.g. load model,
+    setup logging handler, etc.)
+    """
+    logging.basicConfig(filename=LOG_FILE, level=logging.INFO)
+    logging.info("App initialized")
+    global current_model
 
-# # Download a Registry Model:
-# model.download("1.0.0", "./models/")
 
-# Setup logger
-logging.basicConfig(filename='app_logs.log', level=logging.INFO)
+@app.route("/logs", methods=["GET"])
+def logs():
+    """Reads data from the log file and returns them as the response"""
 
-# endpoint for predicting
-@app.route('/predict', methods=['POST'])
-def predict():
     try:
-        data = request.get_json()
-        print("\n\n")
-        print(data)
-        print("\n\n")
-        input_features = pd.read_json(json.dumps(data), orient='records')
-        
-        predictions = current_model.predict(input_features)
-        
-        result = {'predictions': predictions.tolist()}
-        return jsonify(result)
+        with open(LOG_FILE, "r") as log_file:
+            logs = log_file.read()
+        return jsonify({'logs': logs})
     except Exception as e:
-        logging.error(f'Error in /predict endpoint: {str(e)}')
+        logging.error(f'Error in /logs endpoint: {str(e)}')
         return jsonify({'error': 'Internal Server Error'}), 500
+
 
 # endpoint for retrieving logs
 @app.route('/logs', methods=['GET'])
@@ -71,32 +56,83 @@ def get_logs():
     except Exception as e:
         logging.error(f'Error in /logs endpoint: {str(e)}')
         return jsonify({'error': 'Internal Server Error'}), 500
-    
-# endpoint for retrieving the model from comet.ml
-@app.route('/download_registry_model/<model_id>', methods=['GET', 'POST'])
-def getdownload_model(model_id):
+
+@app.route("/download_registry_model", methods=["POST"])
+def download_registry_model():
+    """
+    Handles POST requests made to http://IP_ADDRESS:PORT/download_registry_model
+
+    The comet API key should be retrieved from the ${COMET_API_KEY} environment variable.    
+    """
+    # Get POST json data
+    json = request.get_json()
+    app.logger.info(json)
+
+    workspace = json['workspace']
+    model = json['model']
+    version = json['version']
+
+    # TODO: check to see if the model you are querying for is already downloaded
+    # check if the directory with model exists
+    if os.path.exists(f'./{model}'):
+        try:
+            app.logger.info(f"{model} already downloaded")
+            model_file = [f for f in os.listdir(f'./{model}/') if f.endswith('.pkl')][0]
+
+            with open(f'./{model}/{model_file}', 'rb') as f:
+                current_model = pickle.load(f)
+            app.logger.info(f"{model} loaded")
+            
+            return jsonify({'message': f"Model with model_id '{model}' already downloaded"})
+        except Exception as e:
+            app.logger.error(f'Error in /download_registry_model endpoint: {str(e)}')
+            return jsonify({'error': 'Internal Server Error'}), 500
+
+
+    else:
+        try:
+            model = comet_api.get_model(
+                workspace=workspace,
+                model_name=model
+            )
+            model.download(version, f"./{model}")
+
+            model_file = None
+
+            model_file = [f for f in os.listdir(f'./{model}/') if f.endswith('.pkl')][0]
+
+            with open(f'./{model}/{model_file}', 'rb') as f:
+                current_model = pickle.load(f)
+            app.logger.info(f"Model {model} downloaded and loaded")
+            return jsonify({'message': f"Model with model_id '{model}' downloaded and loaded"})
+        except Exception as e:
+            app.logger.error(f'Error in /download_registry_model endpoint: {str(e)}')
+            return jsonify({'error': 'Internal Server Error'}), 500
+
+@app.route("/predict", methods=["POST"])
+def predict():
+    """
+    Handles POST requests made to http://IP_ADDRESS:PORT/predict
+
+    Returns predictions
+    """
+    # Get POST json data
+    data = request.get_json()
+    app.logger.info(json)
+
+    # TODO:
     try:
-        if model_id==None:
-            return jsonify({'logs': "request recievwd for null model"})
-        global current_model
-        model = comet_api.get_model(
-            workspace=comet_ml_wrokspace,
-            model_name=model_id
-        )
-        model.download("1.0.0", f"./{model_id}")
-
-        model_file = None
-
-        model_file = [f for f in os.listdir(f'./{model_id}/') if f.endswith('.pkl')][0]
-
-        with open(f'./{model_id}/{model_file}', 'rb') as f:
-            current_model = pickle.load(f)
-        logging.info(f"Model {model_id} downloaded a nd loaded")
-        return jsonify({'message': 'Model downloaded and loaded'})
+        input_features = pd.read_json(json.dumps(data), orient='records')
+        
+        predictions = current_model.predict_proba(input_features)
+        
+        result = {'predictions': predictions.tolist()}
+        return jsonify(result)
     except Exception as e:
-        logging.error(f'Error in /download_registry_model endpoint: {str(e)}')
+        logging.error(f'Error in /predict endpoint: {str(e)}')
         return jsonify({'error': 'Internal Server Error'}), 500
 
+    
 
 
 if __name__ == '__main__':
