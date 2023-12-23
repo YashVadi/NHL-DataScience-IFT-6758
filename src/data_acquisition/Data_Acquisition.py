@@ -85,3 +85,10 @@ def __main__ ():
                         
 if __name__ == "__main__":
     __main__()
+
+
+# def get_one_game_json(game_id):
+#     api_url = "https://api-web.nhle.com/v1/gamecenter/" + game_id + "/play-by-play"
+#     response = requests.get(api_url)
+#     json_data = response.json()
+#     return json_data
