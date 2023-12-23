@@ -142,16 +142,16 @@ class Game_Client:
 
         return df, live, game_id, home_team, away_team, home_score, away_score, period, timeRemaining
     
-if __name__ == "__main__":
-    game_client = Game_Client()
-    df, live, game_id, home_team, away_team, home_score, away_score, period, timeRemaining = game_client.ping_game('2023020510')
+# if __name__ == "__main__":
+#     game_client = Game_Client()
+#     df, live, game_id, home_team, away_team, home_score, away_score, period, timeRemaining = game_client.ping_game('2023020510')
 
-    print(df)
-    print("Game is live: " + str(live))
-    print("Game ID is: " + str(game_id))
-    print("Home team is: " + str(home_team))
-    print("Away team is: " + str(away_team))
-    print("Home score is: " + str(home_score))
-    print("Away score is: " + str(away_score))
-    print("period is: " + str(period))
-    print("timeRemaining is: " + str(timeRemaining))
+#     print(df)
+#     print("Game is live: " + str(live))
+#     print("Game ID is: " + str(game_id))
+#     print("Home team is: " + str(home_team))
+#     print("Away team is: " + str(away_team))
+#     print("Home score is: " + str(home_score))
+#     print("Away score is: " + str(away_score))
+#     print("period is: " + str(period))
+#     print("timeRemaining is: " + str(timeRemaining))
