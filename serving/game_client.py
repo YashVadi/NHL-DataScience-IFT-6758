@@ -8,9 +8,9 @@ import math
 logger = logging.getLogger(__name__)
 
 #removed if not so that tracker won't accumulate after each run of app
-with open('tracker.json', 'w') as outfile:
-    history = {}
-    json.dump(history, outfile)
+# with open('tracker.json', 'w') as outfile:
+#     history = {}
+#     json.dump(history, outfile)
 
 class Game_Client:
     def __init__(self):
@@ -61,15 +61,19 @@ class Game_Client:
 
     def tidy_one_game_data(self, json_file):
         data = json_file
-
+    
         data_list = []
-        homeId = data.get('homeTeam').get('id')
-        awayId = data.get('awayTeam').get('id')
+        homeId =  data.get('homeTeam').get('id')
+        awayId =  data.get('awayTeam').get('id')
+
+        plays = data.get("plays")
+
         ID = data.get('id')
+
         plays = data.get('plays')
+
         home_score = 0
         away_score = 0
-
         for i in range(len(plays)):
 
             if plays[i]['typeDescKey'] in ["missed-shot", "goal" ,'shot-on-goal']:
@@ -81,10 +85,12 @@ class Game_Client:
 
                     x = details['xCoord']
                     y = details['yCoord']
-
-
-                    distance = self.get_distance(shooterTeamId, homeId, homeSide, x, y)
-                    angle = self.get_angle(shooterTeamId, homeId, homeSide, x, y)
+                    
+                    timeRemaining = plays[i]['timeRemaining']
+                    period = plays[i]['period']
+                    
+                    distance = self.get_distance(shooterTeamId,homeId,homeSide,x,y)
+                    angle = self.get_angle(shooterTeamId,homeId,homeSide,x,y)
                     isGoal = 0
                     emptyNet = 0
                     if  plays[i]['typeDescKey'] ==  "goal":
@@ -92,17 +98,16 @@ class Game_Client:
                         if shooterTeamId == homeId:
                             home_score += 1
                             if int(plays[i].get('situationCode')[0]) == 0:
-                                emptyNet = 1
+                                emptyNet= 1
                         if shooterTeamId == awayId:
                             away_score += 1
                             if int(plays[i].get('situationCode')[3]) == 0:
                                 emptyNet = 1
 
-                    new_row = {'gameId': ID, 'distance': distance, 'angle': angle, 'emptyNet': emptyNet, 'isGoal': isGoal, 'home_score': home_score,
-                            'away_score': away_score}
+                    new_row = {'gameId':ID,'distance':distance, 'angle':angle, 'emptyNet':emptyNet,'isGoal':isGoal,' period': period, 'timeRemaining':timeRemaining, 'home_score':home_score, 'away_score':away_score}
                     data_list.append(new_row)
         df = pd.DataFrame(data_list)    
-        return df    
+        return df       
 
     def ping_game(self, game_id: str) -> pd.DataFrame:
         live = True
@@ -119,6 +124,8 @@ class Game_Client:
         df = self.tidy_one_game_data(game_json_file)
         home_score = df['home_score'].values[-1]
         away_score = df['away_score'].values[-1]
+        period = df[' period'].values[-1]
+        timeRemaining = df['timeRemaining'].values[-1]
         
         tracker = open('tracker.json')
         history = json.load(tracker)
@@ -133,15 +140,18 @@ class Game_Client:
             json.dump(history, outfile) 
         df = df.reset_index().drop('index', axis=1)[previous_idx:]        
 
-        return df, live, game_id, home_team, away_team, home_score, away_score
+        return df, live, game_id, home_team, away_team, home_score, away_score, period, timeRemaining
     
 if __name__ == "__main__":
     game_client = Game_Client()
-    df, live, game_id, home_team, away_team, home_score, away_score = game_client.ping_game('2023020510')
+    df, live, game_id, home_team, away_team, home_score, away_score, period, timeRemaining = game_client.ping_game('2023020510')
+
     print(df)
-    print(live)
-    print(game_id)
-    print(home_team)
-    print(away_team)
-    print(home_score)
-    print(away_score)
+    print("Game is live: " + str(live))
+    print("Game ID is: " + str(game_id))
+    print("Home team is: " + str(home_team))
+    print("Away team is: " + str(away_team))
+    print("Home score is: " + str(home_score))
+    print("Away score is: " + str(away_score))
+    print("period is: " + str(period))
+    print("timeRemaining is: " + str(timeRemaining))
