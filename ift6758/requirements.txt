@@ -14,7 +14,8 @@ scikit-learn
 comet_ml
 jupyterlab
 ipywidgets
-streamlit
+streamlit==1.29.0
 python-dotenv
 Flask==2.1.3
+Werkzeug==2.2.2
 Flask-Caching==2.1.0

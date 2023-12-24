@@ -9,12 +9,12 @@ logger = logging.getLogger(__name__)
 
 #removed if not so that tracker won't accumulate after each run of app
 with open('tracker.json', 'w') as outfile:
-    data = {}
-    json.dump(data, outfile)
+    history = {}
+    json.dump(history, outfile)
 
-class Game_Client:
+class GameClient:
     def __init__(self):
-        logger.info(f"Initializing ClientGame; base URL: ")
+        logger.info(f"Initializing ClientGame...")
 
     def compose_api_url (self, game_id):
         return "https://api-web.nhle.com/v1/gamecenter/" + game_id + "/play-by-play"
@@ -59,23 +59,14 @@ class Game_Client:
                 c = abs(x + 100)
                 return math.degrees(math.acos((b**2 + c**2 - a**2)/(2*b*c)))
 
-    def tidy_one_game_data(self, game_info):
-    # data_to_tidy = get_all_files_path_under(path)
-
+    def tidy_one_game_data(self, json_file):
+        data = json_file
+    
         data_list = []
-
-    # for j in tqdm(range(len(data_to_tidy))):
-        
-        data = game_info
-     
-        # with open(json_file) as json_file:
-            # data = json.load(json_file)
-
-
         homeId =  data.get('homeTeam').get('id')
         awayId =  data.get('awayTeam').get('id')
 
-        # plays = data.get("plays")
+        plays = data.get("plays")
 
         ID = data.get('id')
 
@@ -84,7 +75,7 @@ class Game_Client:
         home_score = 0
         away_score = 0
         for i in range(len(plays)):
-                    
+
             if plays[i]['typeDescKey'] in ["missed-shot", "goal" ,'shot-on-goal']:
                 details =  plays[i].get('details')
                 if 'xCoord' in details.keys():
@@ -94,12 +85,19 @@ class Game_Client:
 
                     x = details['xCoord']
                     y = details['yCoord']
-               
-   
+                    
+                    timeRemaining = plays[i]['timeRemaining']
+                    period = plays[i]['period']
+                    
                     distance = self.get_distance(shooterTeamId,homeId,homeSide,x,y)
                     angle = self.get_angle(shooterTeamId,homeId,homeSide,x,y)
                     isGoal = 0
                     emptyNet = 0
+                    if shooterTeamId == homeId:
+                        home_or_away = 'home'
+                    else:
+                        home_or_away = 'away'
+                    
                     if  plays[i]['typeDescKey'] ==  "goal":
                         isGoal = 1
                         if shooterTeamId == homeId:
@@ -111,45 +109,60 @@ class Game_Client:
                             if int(plays[i].get('situationCode')[3]) == 0:
                                 emptyNet = 1
 
-                    new_row = {'gameId': ID, 'distance': distance, 'angle': angle, 'emptyNet': emptyNet, 'isGoal': isGoal, 'home_score': home_score,
-                               'away_score': away_score}
+                    new_row = {'gameId':ID, 'home_or_away': home_or_away, 'distance':distance, 'angle':angle, 'emptyNet':emptyNet,'isGoal':isGoal,' period': period, 'timeRemaining':timeRemaining, 'home_score':home_score, 'away_score':away_score}
                     data_list.append(new_row)
-        df = pd.DataFrame(data_list)        
-        # path =os.path.normpath(path) 
-        # path.split('\\')[-2:]
-        # csv_name = path.split('\\')[-2]+'_'+ path.split('\\')[-1]+'_clean'+'.csv'
-        # folder = './ift6758/ift6758/data/data_tidy/'+csv_name
-
-        # df.to_csv(folder, encoding='utf-8', index=False)
+        df = pd.DataFrame(data_list)    
+        return df       
 
     def ping_game(self, game_id: str) -> pd.DataFrame:
         live = True
         
-        game_info = self.get_game_data(self.compose_api_url(game_id))
+        game_json_file = self.get_game_data(self.compose_api_url(game_id))
 
-        if game_info.get('gameState') == 'OFF':
+        if game_json_file.get('gameState') == 'OFF':
             live = False
         
-        # df = self.tidy_one_game_data(game_info)
-        # home_score = df['home_score'].values[0]
-        # away_score = df['away_score'].values[0]
-        home_team = game_info['homeTeam']['name']['default']
-        away_team = game_info['awayTeam']['name']['default']
-        home_score = game_info['homeTeam']['score']
-        away_score = game_info['awayTeam']['score']
+        home_team = game_json_file['homeTeam']['name']['default']
+        away_team = game_json_file['awayTeam']['name']['default']
+        home_score = game_json_file['homeTeam']['score']
+        away_score = game_json_file['awayTeam']['score']
+        df = self.tidy_one_game_data(game_json_file)
+        home_score = df['home_score'].values[-1]
+        away_score = df['away_score'].values[-1]
+        period = df[' period'].values[-1]
+        timeRemaining = df['timeRemaining'].values[-1]
         
-        f = open('tracker.json')
-        data = json.load(f)
-        old_idx=0
-        if game_id in data:
-            old_idx=data[str(game_id)]['idx']
-            data[str(game_id)]['idx'] = len(df)
+        ###############################################
+        # The codes below are refered to github:
+        # "https://github.com/haooyuee/nhl-shot-analysis/blob/main/milestone_3_nhl_app/ift6758/ift6758/client/game_client.py"
+        ###############################################
+        tracker = open('tracker.json')
+        history = json.load(tracker)
+        previous_idx = 0
+        if game_id in history:
+            previous_idx = history[str(game_id)]['idx']
+            history[str(game_id)]['idx'] = len(df)
         else:
-            data[str(game_id)] = {}
-            data[str(game_id)]['idx'] = len(df)
+            history[str(game_id)] = {}
+            history[str(game_id)]['idx'] = len(df)
         with open('tracker.json', 'w') as outfile:
-            json.dump(data, outfile) 
-        df = df.reset_index().drop('index', axis=1)[old_idx:]        
-        # df[df['team']==df['home']],df[df['team']==df['away']] 
-        # return df, live, game_id, timeLeft, home_team, away_team, home_score, away_score
-        return df, live, game_id, home_team, away_team, home_score, away_score
+            json.dump(history, outfile) 
+        df = df.reset_index().drop('index', axis=1)[previous_idx:]   
+        ###############################################
+        ###############################################     
+
+        return df, live, game_id, home_team, away_team, home_score, away_score, period, timeRemaining
+    
+if __name__ == "__main__":
+    game_client = GameClient()
+    df, live, game_id, home_team, away_team, home_score, away_score, period, timeRemaining = game_client.ping_game('2023020510')
+
+    print(df)
+    print("Game is live: " + str(live))
+    print("Game ID is: " + str(game_id))
+    print("Home team is: " + str(home_team))
+    print("Away team is: " + str(away_team))
+    print("Home score is: " + str(home_score))
+    print("Away score is: " + str(away_score))
+    print("period is: " + str(period))
+    print("timeRemaining is: " + str(timeRemaining))

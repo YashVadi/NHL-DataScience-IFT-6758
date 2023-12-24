@@ -121,14 +121,14 @@ def predict():
     # Get POST json data
     data = request.get_json()
     app.logger.info(json)
-
+    global current_model
     # TODO:
     # try:
-    input_features = pd.read_json(data, orient='records')
+    input_features = pd.read_json(data)
     
     predictions = current_model.predict_proba(input_features)
     
-    result = {'predictions': predictions.tolist()}
+    result = {'predictions': predictions[:,1].tolist()}
     return jsonify(result)
     # except Exception as e:
     #     logging.error(f'Error in /predict endpoint: {str(e)}')

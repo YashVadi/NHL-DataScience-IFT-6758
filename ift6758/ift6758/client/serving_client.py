@@ -13,6 +13,11 @@ class ServingClient:
         logger.info(f"Initializing client; base URL: {self.base_url}")
 
         # any other potential initialization
+        self.model = None
+        self.feature_map = {
+            'baseline_model_distance': ['distance'],
+            'baseline_model_distance-angle': ['distance', 'angle']
+        }
 
     def predict(self, X: pd.DataFrame) -> pd.DataFrame:
         """
@@ -23,10 +28,13 @@ class ServingClient:
         Args:
             X (Dataframe): Input dataframe to submit to the prediction service.
         """
-        data = X.to_json(orient='split')
+        data = X.to_json()
         prediction_url = f"{self.base_url}/predict"
-        response = requests.post(prediction_url, json = data.values)
-        return pd.read_json(response.json(),orient = 'split')
+        response = requests.post(prediction_url, json = data)
+
+        print(data)
+        print(response.json())
+        return response.json()['predictions']
     
     
     def logs(self) -> dict:
@@ -52,10 +60,11 @@ class ServingClient:
             model (str): The model in the Comet ML registry to download
             version (str): The model version to download
         """
+        self.model = model
         response = requests.post(self.base_url+'/download_registry_model',
                                  json={'workspace': workspace, 'model': model, 'version': version})
         logger.info("Model download finished")
-        return response.json()
+        return response
 
 
 if __name__ == '__main__':
